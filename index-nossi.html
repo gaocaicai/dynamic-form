@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>表单组件</title>
+	<link rel="stylesheet" href="static/css/reset.css">
+	<link rel="stylesheet" href="static/css/daterangepicker.css">
+	<script src="static/js/jquery-1.11.js"></script>
+	<script src="static/js/moment.min.js"></script>
+	<script src="static/js/daterangepicker-3.03.js"></script>
+	<script src="static/js/vue-2.5.14.js"></script>
+	<link rel="stylesheet" href="static/css/daterangepicker.css">
+	<link rel="stylesheet" href="static/css/dynamic-form.css">
+	<script type="text/x-template" id="form-template">
+		<div class="v-form-item">
+			<!-- input 输入框 -->
+			<div class="form-text" :class="['form-'+form.name]" v-if="form.type=='text'" >
+				<label v-if="form.label" class="form-label">
+					<font v-if="isRequired(form)">*</font>
+					{{form.label}}
+				</label>
+				<input class="form-control" type="text" :placeholder="form.el.placeHolder || ''" v-model='form.value' @blur.prevent='validate'>
+				<div class="error-tip">{{form.tip}}</div>
+				<slot :name="form.name"></slot>
+			</div>
+			<!-- textarea 多行输入框 -->
+			<div class="form-textarea" :class="['form-'+form.name]" v-if="form.type=='textarea'" >
+				<label v-if="form.label" class="form-label" for="">
+					<font v-if="isRequired(form)">*</font>
+					{{form.label}}
+				</label>
+				<textarea class="form-control" name="" id="" :placeholder="form.el.placeHolder || ''" v-model='form.value' @blur.prevent='validate'></textarea>
+				<div class="error-tip">{{form.tip}}</div>
+				<slot :name="form.name"></slot>
+			</div>
+			<!-- radio 单选框 -->
+			<div class="form-radio" :class="['form-'+form.name]" v-if="form.type=='radio'">
+				<label v-if="form.label" class="form-label">
+					<font v-if="isRequired(form)">*</font>
+					{{form.label}}
+				</label>
+				<div class="form-content">
+					<label class="radio-item" v-for="(item,index) in form.options" :for="form.name+index">
+						<input type="radio" :value="item.value?item.value:item.name" :id="form.name+index" v-model='form.value' :name="form.name" @click="validate">
+						<span>{{item.label}}</span>
+					</label>
+				</div>
+				<div class="error-tip">{{form.tip}}</div>
+				<slot :name="form.name"></slot>
+			</div>
+			<!-- checkbox 多选框 -->
+			<div class="form-checkbox" :class="['form-'+form.name]" v-if="form.type=='checkbox'">
+				<label v-if="form.label" class="form-label" for="">
+					<font v-if="isRequired(form)">*</font>
+					{{form.label}}
+				</label>
+				<div class="form-content">
+					<label class="checkbox-item" v-for="(item,index) in form.options" :for="form.name+index">
+						<input type="checkbox" :value="item.value?item.value:item.name" :id="form.name+index" v-model='form.value' :name="form.name" @click="validate">
+						<span>{{item.label}}</span>
+					</label>
+				</div>
+				<div class="error-tip">{{form.tip}}</div>
+				<slot :name="form.name"></slot>
+			</div>
+			<!-- select 单选框 -->
+			<div class="form-select" :class="['form-'+form.name]" v-if="form.type=='select'">
+				<label v-if="form.label" class="form-label" for="">
+					<font v-if="isRequired(form)">*</font>
+					{{form.label}}
+				</label>
+				<select name="" id="" v-model="form.value" class="form-control" @blur.prevent='validate'>
+					<option :value="item.value" v-for="item in form.options">{{item.label}}</option>
+				</select>
+				<div class="error-tip">{{form.tip}}</div>
+				<slot :name="form.name"></slot>
+			</div>
+			<!-- 上传图片 -->
+			<div class="form-upload" :class="['form-'+form.name]" v-if="form.type=='upload'">
+				<label v-if="form.label"  class="form-label" for="">
+					<font v-if="isRequired(form)">*</font>
+					{{form.label}}
+				</label>
+				<span class="upload" :class="{'loading':upload.status=='上传中...'}">
+					{{upload.status}}
+					<input id="mcmp--matteredit-upload" type="file" name="" @change="uploadImg(this)">
+					<img :src="form.value" width="100%" alt="">
+				</span>
+				<div class="error-tip">{{form.tip}}</div>
+				<slot :name="form.name"></slot>
+			</div>
+			<!-- 日期 -->
+			<div class="form-upload" :class="['form-'+form.name]" v-if="form.type=='date'">
+				<label v-if="form.label"  class="form-label" for="">
+					<font v-if="isRequired(form)">*</font>
+					{{form.label}}
+				</label>
+				<div class="datepicker">
+					<input type="text" class="form-control" :value="form.value" v-daterangepicker @blur="validate">
+				</div>
+				<div class="error-tip">{{form.tip}}</div>
+				<slot :name="form.name"></slot>
+			</div>
+		</div>
+	</script>
+	<script src="static/js/dynamic-form.js"></script>
+</head>
+<body>
+	<div class="dynamic-form" id="dynamic-form">
+		<form-element v-for="(item,index) in list"  :formconfig='item' :key="item.id" >
+			<!-- 根据具体业务放具体内容 -->
+			<template :slot='item.name' v-if="item.name=='notice'">
+				<i class="glyphicon glyphicon-exclamation-sign">
+					<span class="small_tip_outside" style="display: none;">此信息不会显示给用户</span>
+				</i>
+			</template>
+		<form-element>
+	</div>
+	<script>
+		//数据配置
+		var formlistOpts = [
+		    { 
+		      //表单类型 text textarea radio checkbox file select 后续增加组group
+		      "type":"text",
+		      // name 具有唯一性
+		      "name":"active-name",
+		      //标题名 
+		      "label":"活动名称",
+		      //表单的默认值
+		      "defalut":"默认值",
+		      //表单的一些属性配置
+		      "el":{
+		        "placeHolder":"请输入活动名称",
+		      },
+		      //表单验证
+		      "rules":[
+		        {
+		          "require":true,
+		          "tip":"活动名称不能为空"
+		        },
+		        {
+		          "min":6,
+		          "max":10,
+		          "tip":"活动名称字符长度为6-10"
+		        },
+		      ]
+		    },
+		    {
+		        "type":"text",
+		        "name":"mobile",
+		        "label":"手机号",
+		        "el":{
+		          "placeHolder":"请输入您的手机号",
+		        },
+		        "rules":[
+		          {
+		            "require":true,
+		            "tip":"手机号不能为空"
+		          },
+		          {
+		            //type 是一些预设好的类型检测 比如邮箱 数字 手机号...
+		            "mobile": true,
+		            "tip":"您输入的手机格式不对"
+		          }
+		        ]  
+		    },
+		    {
+		        "type":"text",
+		        "name":"phone",
+		        "label":"固定电话",
+		        "el":{
+		          "placeHolder":"请输入您的固定电话",
+		        },
+		        "rules":[
+		          {
+		            //type 是一些预设好的类型检测 比如邮箱 数字 手机号...
+		            "phone": true,
+		            "tip":"您输入的固定电话格式不对"
+		          }
+		        ]
+		    },
+		    {
+		        "type":"text",
+		        "name":"email",
+		        "label":"邮箱",
+		        "el":{
+		          "placeHolder":"请输入您的邮箱",
+		        },
+		        "rules":[
+		          {
+		            "require":true,
+		            "tip":"邮箱不能为空"
+		          },
+		          {
+		            //type 是一些预设好的类型检测 比如邮箱 数字 手机号...
+		            "email": true,
+		            "tip":"您输入的邮箱格式不对"
+		          }
+		        ]
+		    },
+		    {
+		      "type":"date",
+		      "name":"active-date",
+		      "label":"活动时间",
+		      "el":{
+		        //单选日期还是多选日期 single double
+		        "type":"double",
+		        "format":"YYYY-MM-DD"
+		      },
+		      "rules":[
+		        {
+		          "require": true,
+		          "tip":"活动日期不能为空"
+		        }
+		      ]
+		    },
+		    {
+		      "type":"upload",
+		      "name":"active-picture",
+		      "label":"上传图片",
+		      // 自定义上传函数
+		      // customUpload: function(file, callback) {
+		      // 	// TODO
+		      // 	var url = 'xxx';
+		      // 	// callback(url);
+		      // },
+		      // 上传地址
+		      "uploadUrl": 'http://up-z2.qiniup.com',
+		      "getToken": function(callback) {
+		      	var token = '4_-TDy4ee6uZXdWFx5Te4-YGC_5GcIbeDR5EPeF4:0IfyuTw2WwtpMwj1LBDBzM66pDc=:eyJzY29wZSI6IjIyMjIiLCJkZWFkbGluZSI6MTUzNDkwMjY2MX0=';
+		      	callback(token);
+		      },
+		      "getFileUrl": function(res, callback) {
+		      	var url = 'http://oqil1bd5m.bkt.clouddn.com/' + res.key;
+		      	callback(url);
+		      },
+		      "rules":[
+		        {
+		          //图片上传的最大大小，单位kb
+		          "size":3000,
+		          "tip":"请上传大小为 3 Mb 以下的图片"
+		        },
+		        {
+		          // 上传的类型
+		          "suffix": ['jpg', 'png', 'jpeg'],
+		          "tip":"请上传jpg、png、jpeg类型的图片"
+		        },
+		      ]
+		    },
+		    {
+		      "type":"checkbox",
+		      "name":"active-purpose",
+		      "label":"活动性质",
+		      "defalut":[1,2],
+		      "el":{
+		      },
+		      "options":[
+		      		{
+			      		"label":"线下活动",
+			      		"value":"1"
+		      		},
+		      		{
+			      		"label":"品牌曝光",
+			      		"value":"2"
+		      		},
+		      		{
+			      		"label":"地推",
+			      		"value":"3·"
+		      		},
+		      		{
+			      		"label":"促销折扣",
+			      		"value":"4"
+		      		},
+		      ],
+		      rules: [
+                {
+                  require: true,
+                  tip: '活动性质不能为空'
+                }
+              ]
+		    },
+		    {
+		      "type":"radio",
+		      "name":"active-resource",
+		      "label":"特殊资源",
+		      "defalut":1,
+		      "el":{
+		      },
+		      "options":[
+		      		{
+			      		"label":"线上品牌赞助",
+			      		"value":"1"
+		      		},
+		      		{
+			      		"label":"线下场地免费",
+			      		"value":"2"
+			      	}
+		      ],
+		    },
+		    {
+		      "type":"select",
+		      "name":"active-area",
+		      "label":"活动区域",
+		      "defalut":0,
+		      "el":{
+		      },
+		      "options":[
+		      		{
+			      		"label":"请选择活动区域",
+			      		"value":"0"
+		      		},
+		      		{
+			      		"label":"北京",
+			      		"value":"1"
+		      		},
+		      		{
+			      		"label":"上海",
+			      		"value":"2"
+			      	},
+			      	{
+			      		"label":"深圳",
+			      		"value":"3"
+			      	},
+			      	{
+			      		"label":"广东",
+			      		"value":"4"
+			      	}
+		      ],
+		    },
+		  ];
+	</script>
+	<script>
+		var form = new Vue({
+			el:'#dynamic-form',
+			created:function (argument) {
+				this.list= increaseFormField(formlistOpts);
+			},
+			data:{
+				list:[]
+			},
+			computed:{
+
+			},
+			methods:{
+			}
+		})
+
+	</script>
+</body>
+</html>
