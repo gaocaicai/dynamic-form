@@ -1,0 +1,95 @@
+<link rel="stylesheet" href="static/css/daterangepicker.css">
+<link rel="stylesheet" href="static/css/dynamic-form.css">
+<script type="text/x-template" id="form-template">
+	<div class="v-form-item">
+		<!-- input 输入框 -->
+		<div class="form-text" :class="['form-'+form.name]" v-if="form.type=='text'" >
+			<label v-if="form.label" class="form-label">
+				<font v-if="isRequired(form)">*</font>
+				{{form.label}}
+			</label>
+			<input class="form-control" type="text" :placeholder="form.el.placeHolder || ''" v-model='form.value' @blur.prevent='validate'>
+			<div class="error-tip">{{form.tip}}</div>
+			<slot :name="form.name"></slot>
+		</div>
+		<!-- textarea 多行输入框 -->
+		<div class="form-textarea" :class="['form-'+form.name]" v-if="form.type=='textarea'" >
+			<label v-if="form.label" class="form-label" for="">
+				<font v-if="isRequired(form)">*</font>
+				{{form.label}}
+			</label>
+			<textarea class="form-control" name="" id="" :placeholder="form.el.placeHolder || ''" v-model='form.value' @blur.prevent='validate'></textarea>
+			<div class="error-tip">{{form.tip}}</div>
+			<slot :name="form.name"></slot>
+		</div>
+		<!-- radio 单选框 -->
+		<div class="form-radio" :class="['form-'+form.name]" v-if="form.type=='radio'">
+			<label v-if="form.label" class="form-label">
+				<font v-if="isRequired(form)">*</font>
+				{{form.label}}
+			</label>
+			<div class="form-content">
+				<label class="radio-item" v-for="(item,index) in form.options" :for="form.name+index">
+					<input type="radio" :value="item.value?item.value:item.name" :id="form.name+index" v-model='form.value' :name="form.name" @click="validate">
+					<span>{{item.label}}</span>
+				</label>
+			</div>
+			<div class="error-tip">{{form.tip}}</div>
+			<slot :name="form.name"></slot>
+		</div>
+		<!-- checkbox 多选框 -->
+		<div class="form-checkbox" :class="['form-'+form.name]" v-if="form.type=='checkbox'">
+			<label v-if="form.label" class="form-label" for="">
+				<font v-if="isRequired(form)">*</font>
+				{{form.label}}
+			</label>
+			<div class="form-content">
+				<label class="checkbox-item" v-for="(item,index) in form.options" :for="form.name+index">
+					<input type="checkbox" :value="item.value?item.value:item.name" :id="form.name+index" v-model='form.value' :name="form.name" @click="validate">
+					<span>{{item.label}}</span>
+				</label>
+			</div>
+			<div class="error-tip">{{form.tip}}</div>
+			<slot :name="form.name"></slot>
+		</div>
+		<!-- select 单选框 -->
+		<div class="form-select" :class="['form-'+form.name]" v-if="form.type=='select'">
+			<label v-if="form.label" class="form-label" for="">
+				<font v-if="isRequired(form)">*</font>
+				{{form.label}}
+			</label>
+			<select name="" id="" v-model="form.value" class="form-control" @blur.prevent='validate'>
+				<option :value="item.value" v-for="item in form.options">{{item.label}}</option>
+			</select>
+			<div class="error-tip">{{form.tip}}</div>
+			<slot :name="form.name"></slot>
+		</div>
+		<!-- 上传图片 -->
+		<div class="form-upload" :class="['form-'+form.name]" v-if="form.type=='upload'">
+			<label v-if="form.label"  class="form-label" for="">
+				<font v-if="isRequired(form)">*</font>
+				{{form.label}}
+			</label>
+			<span class="upload" :class="{'loading':upload.status=='上传中...'}">
+				{{upload.status}}
+				<input id="mcmp--matteredit-upload" type="file" name="" @change="uploadImg(this)">
+				<img :src="form.value" width="100%" alt="">
+			</span>
+			<div class="error-tip">{{form.tip}}</div>
+			<slot :name="form.name"></slot>
+		</div>
+		<!-- 日期 -->
+		<div class="form-upload" :class="['form-'+form.name]" v-if="form.type=='date'">
+			<label v-if="form.label"  class="form-label" for="">
+				<font v-if="isRequired(form)">*</font>
+				{{form.label}}
+			</label>
+			<div class="datepicker">
+				<input type="text" class="form-control" :value="form.value" v-daterangepicker @blur="validate">
+			</div>
+			<div class="error-tip">{{form.tip}}</div>
+			<slot :name="form.name"></slot>
+		</div>
+	</div>
+</script>
+<script src="static/js/dynamic-form.js"></script>
